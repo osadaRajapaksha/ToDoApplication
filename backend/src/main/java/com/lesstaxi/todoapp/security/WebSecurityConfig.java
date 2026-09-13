@@ -6,6 +6,7 @@ import com.lesstaxi.todoapp.security.services.UserDetailsServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
@@ -38,8 +39,7 @@ public class WebSecurityConfig {
 
   @Bean
   public DaoAuthenticationProvider authenticationProvider() {
-      DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
-      authProvider.setUserDetailsService(userDetailsService);
+      DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider(userDetailsService);
       authProvider.setPasswordEncoder(passwordEncoder());
       return authProvider;
   }
@@ -54,10 +54,13 @@ public class WebSecurityConfig {
     return new BCryptPasswordEncoder();
   }
 
+  @Value("${app.frontend.url:http://localhost:3000}")
+  private String frontendUrl;
+
   @Bean
   public CorsConfigurationSource corsConfigurationSource() {
       CorsConfiguration configuration = new CorsConfiguration();
-      configuration.setAllowedOrigins(Arrays.asList("http://localhost:3000")); // frontend url
+      configuration.setAllowedOrigins(Arrays.asList(frontendUrl));
       configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
       configuration.setAllowedHeaders(Arrays.asList("authorization", "content-type", "x-auth-token"));
       configuration.setExposedHeaders(Arrays.asList("x-auth-token"));
