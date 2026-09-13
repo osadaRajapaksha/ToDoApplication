@@ -145,7 +145,7 @@ resource "aws_cloudfront_distribution" "frontend_distribution" {
       }
     }
 
-    viewer_protocol_policy = "redirect-to-https"
+    viewer_protocol_policy = "allow-all"
     min_ttl                = 0
     default_ttl            = 3600
     max_ttl                = 86400
