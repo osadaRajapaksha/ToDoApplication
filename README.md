@@ -107,13 +107,11 @@ Users are authenticated with **JWT tokens** and interact with a secure REST API.
 
 ## Screenshots
 
-> **Login Page** — JWT-secured authentication with error handling  
-![Login Page](image.png)
 
-> **Register Page** — User registration with client-side validation  
+> **Login Page** — JWT-secured authentication with error handling  
 ![Register Page](image-1.png)
 
-> **Dashboard** — Task board with To Do, Doing, and Done columns, task cards showing assignment status, and Edit/Delete controls  
+> **Normal User Dashboard** — Task board with To Do, Doing, and Done columns, task cards showing assignment status, and Edit/Delete controls  
 ![Dashboard](image-2.png)
 
 > **Admin User Dashboard** — Task board with To Do, Doing, and Done columns, task cards showing assignment status, and assigning tasks to users  
