@@ -5,6 +5,12 @@ import { fetchApi } from '../lib/api';
 
 const COLUMNS = ['TODO', 'DOING', 'DONE'];
 
+const COLUMN_NAMES = {
+  TODO: 'To Do',
+  DOING: 'Doing',
+  DONE: 'Done'
+};
+
 export default function TaskBoard({ user }) {
   const [tasks, setTasks] = useState([]);
   const [users, setUsers] = useState([]);
@@ -152,7 +158,7 @@ export default function TaskBoard({ user }) {
             onDragOver={handleDragOver}
           >
             <h3 style={{ marginBottom: '20px', paddingBottom: '10px', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
-              {col} ({tasks.filter(t => t.status === col).length})
+              {COLUMN_NAMES[col]} ({tasks.filter(t => t.status === col).length})
             </h3>
             
             <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
