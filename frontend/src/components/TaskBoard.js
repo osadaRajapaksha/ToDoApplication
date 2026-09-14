@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { fetchApi } from '../lib/api';
+import { fetchApi, breakdownTaskWithAI } from '../lib/api';
 
 const COLUMNS = ['TODO', 'DOING', 'DONE'];
 
@@ -26,6 +26,44 @@ export default function TaskBoard({ user }) {
   const [editingTask, setEditingTask] = useState(null);
   const [editTaskTitle, setEditTaskTitle] = useState('');
   const [editTaskDesc, setEditTaskDesc] = useState('');
+
+  const [isBreakingDown, setIsBreakingDown] = useState(false);
+
+  const handleBreakdownNewTask = async () => {
+    if (!newTaskTitle) {
+      alert('Please enter a title first to break it down.');
+      return;
+    }
+    setIsBreakingDown(true);
+    try {
+      const response = await breakdownTaskWithAI(newTaskTitle, newTaskDesc);
+      if (response && response.subtasks) {
+        setNewTaskDesc(prev => prev ? prev + '\n\n' + response.subtasks : response.subtasks);
+      }
+    } catch (e) {
+      alert('Error breaking down task: ' + e.message);
+    } finally {
+      setIsBreakingDown(false);
+    }
+  };
+
+  const handleBreakdownEditTask = async () => {
+    if (!editTaskTitle) {
+      alert('Please enter a title first to break it down.');
+      return;
+    }
+    setIsBreakingDown(true);
+    try {
+      const response = await breakdownTaskWithAI(editTaskTitle, editTaskDesc);
+      if (response && response.subtasks) {
+        setEditTaskDesc(prev => prev ? prev + '\n\n' + response.subtasks : response.subtasks);
+      }
+    } catch (e) {
+      alert('Error breaking down task: ' + e.message);
+    } finally {
+      setIsBreakingDown(false);
+    }
+  };
 
   const loadTasks = async () => {
     try {
@@ -246,9 +284,14 @@ export default function TaskBoard({ user }) {
                 <label style={{ display: 'block', marginBottom: '5px' }}>Description</label>
                 <textarea required className="input-field" value={newTaskDesc} onChange={e => setNewTaskDesc(e.target.value)} style={{ minHeight: '100px', resize: 'vertical' }} />
               </div>
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '10px' }}>
-                <button type="button" onClick={() => setShowCreateModal(false)} className="btn-secondary">Cancel</button>
-                <button type="submit" className="btn-primary">Create</button>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '10px' }}>
+                <button type="button" onClick={handleBreakdownNewTask} disabled={isBreakingDown} className="btn-secondary" style={{ background: 'var(--primary-color)', color: 'white', border: 'none' }}>
+                  {isBreakingDown ? '✨ Thinking...' : '✨ Break Down with AI'}
+                </button>
+                <div style={{ display: 'flex', gap: '10px' }}>
+                  <button type="button" onClick={() => setShowCreateModal(false)} className="btn-secondary">Cancel</button>
+                  <button type="submit" className="btn-primary">Create</button>
+                </div>
               </div>
             </form>
           </div>
@@ -268,9 +311,14 @@ export default function TaskBoard({ user }) {
                 <label style={{ display: 'block', marginBottom: '5px' }}>Description</label>
                 <textarea required className="input-field" value={editTaskDesc} onChange={e => setEditTaskDesc(e.target.value)} style={{ minHeight: '100px', resize: 'vertical' }} />
               </div>
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '10px' }}>
-                <button type="button" onClick={() => { setShowEditModal(false); setEditingTask(null); }} className="btn-secondary">Cancel</button>
-                <button type="submit" className="btn-primary">Save Changes</button>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '10px' }}>
+                <button type="button" onClick={handleBreakdownEditTask} disabled={isBreakingDown} className="btn-secondary" style={{ background: 'var(--primary-color)', color: 'white', border: 'none' }}>
+                  {isBreakingDown ? '✨ Thinking...' : '✨ Break Down with AI'}
+                </button>
+                <div style={{ display: 'flex', gap: '10px' }}>
+                  <button type="button" onClick={() => { setShowEditModal(false); setEditingTask(null); }} className="btn-secondary">Cancel</button>
+                  <button type="submit" className="btn-primary">Save Changes</button>
+                </div>
               </div>
             </form>
           </div>

@@ -61,12 +61,13 @@ jobs:
           MONGO_URI: ${{ secrets.SPRING_DATA_MONGODB_URI }}
           JWT_SECRET_VAL: ${{ secrets.JWT_SECRET }}
           FRONTEND_URL: ${{ secrets.APP_FRONTEND_URL }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: |
           # Write deploy script locally, scp it, then run it with env vars inline
-          printf '#!/bin/bash\nset -e\nREPO=/home/ec2-user/ToDoApplication\nsudo chown -R ec2-user:ec2-user $REPO\ncd $REPO\ngit pull origin master\nprintf "SPRING_DATA_MONGODB_URI=%%s\nJWT_SECRET=%%s\nAPP_FRONTEND_URL=%%s\n" "$MONGO_URI" "$JWT_SECRET_VAL" "$FRONTEND_URL" > .env\nsudo /usr/local/bin/docker-compose up -d --build\n' > /tmp/deploy.sh
+          printf '#!/bin/bash\nset -e\nREPO=/home/ec2-user/ToDoApplication\nsudo chown -R ec2-user:ec2-user $REPO\ncd $REPO\ngit pull origin master\nprintf "SPRING_DATA_MONGODB_URI=%%s\nJWT_SECRET=%%s\nAPP_FRONTEND_URL=%%s\nGEMINI_API_KEY=%%s\n" "$MONGO_URI" "$JWT_SECRET_VAL" "$FRONTEND_URL" "$GEMINI_API_KEY" > .env\nsudo /usr/local/bin/docker-compose up -d --build\n' > /tmp/deploy.sh
           scp -i ~/.ssh/ec2_key /tmp/deploy.sh $EC2_USER@$EC2_HOST:/tmp/deploy.sh
           ssh -i ~/.ssh/ec2_key $EC2_USER@$EC2_HOST \
-            "MONGO_URI='$MONGO_URI' JWT_SECRET_VAL='$JWT_SECRET_VAL' FRONTEND_URL='$FRONTEND_URL' bash /tmp/deploy.sh"
+            "MONGO_URI='$MONGO_URI' JWT_SECRET_VAL='$JWT_SECRET_VAL' FRONTEND_URL='$FRONTEND_URL' GEMINI_API_KEY='$GEMINI_API_KEY' bash /tmp/deploy.sh"
 
       - name: Health check
         run: |

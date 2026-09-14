@@ -44,3 +44,10 @@ export const fetchApi = async (endpoint, options = {}) => {
     return response.text();
   }
 };
+
+export const breakdownTaskWithAI = async (title, description) => {
+  return fetchApi('/ai/breakdown', {
+    method: 'POST',
+    body: JSON.stringify({ title, description })
+  });
+};

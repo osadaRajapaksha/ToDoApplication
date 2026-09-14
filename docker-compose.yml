@@ -11,4 +11,5 @@ services:
       - SPRING_MONGODB_URI=${SPRING_DATA_MONGODB_URI}/todoapp
       - JWT_SECRET=${JWT_SECRET}
       - APP_FRONTEND_URL=${APP_FRONTEND_URL}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
     restart: unless-stopped
