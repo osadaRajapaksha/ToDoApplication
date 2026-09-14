@@ -58,6 +58,11 @@ Users are authenticated with **JWT tokens** and interact with a secure REST API.
 - Move tasks between columns via status update
 - Assign tasks to yourself or other users (admin only)
 
+### 🧠 Smart Task Breakdown (AI)
+- Integrated with Google's **Gemini 3.6 Flash** LLM via REST API.
+- One-click **"✨ Break Down with AI"** button on the Task Creation and Edit modals.
+- Automatically generates actionable subtasks formatted as markdown checklists within the task description.
+
 ### Role-Based Access Control
 | Action | Normal User | Admin |
 |---|---|---|
