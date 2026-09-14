@@ -209,8 +209,15 @@ export default function TaskBoard({ user }) {
                   onDragStart={(e) => handleDragStart(e, task.id)}
                 >
                   <h4 style={{ margin: '0 0 10px 0', color: 'var(--text-primary)' }}>{task.title}</h4>
-                  <p style={{ margin: '0 0 15px 0', color: 'var(--text-secondary)', fontSize: '14px' }}>{task.description}</p>
+                  <p style={{ margin: '0 0 15px 0', color: 'var(--text-secondary)', fontSize: '14px', whiteSpace: 'pre-wrap' }}>{task.description}</p>
                   
+                  <div style={{ fontSize: '11px', color: 'var(--text-secondary)', marginBottom: '15px' }}>
+                    <div>Created: {new Date(task.createdAt).toLocaleString()}</div>
+                    {task.updatedAt && task.updatedAt !== task.createdAt && (
+                      <div>Updated: {new Date(task.updatedAt).toLocaleString()}</div>
+                    )}
+                  </div>
+
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '12px', color: 'var(--text-secondary)' }}>
                     <div>
                       {task.assignedUserId ? 
