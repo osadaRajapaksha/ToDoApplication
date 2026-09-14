@@ -218,6 +218,7 @@ Infrastructure is provisioned with **Terraform** (see the `terraform/` directory
 | `SPRING_DATA_MONGODB_URI` | MongoDB Atlas connection string |
 | `JWT_SECRET` | Secret key for signing JWT tokens (min 256 bits) |
 | `APP_FRONTEND_URL` | The CloudFront URL of the deployed frontend |
+| `GEMINI_API_KEY` | API key for Google Gemini LLM |
 
 > ⚠️ **Never commit real credentials.** Use environment variables or a secrets manager.
 
@@ -252,6 +253,7 @@ Push to master
 | `SPRING_DATA_MONGODB_URI` | MongoDB connection string |
 | `JWT_SECRET` | JWT signing secret |
 | `APP_FRONTEND_URL` | The CloudFront frontend URL |
+| `GEMINI_API_KEY` | API key for Google Gemini LLM |
 
 ---
 
