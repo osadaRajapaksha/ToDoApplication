@@ -20,6 +20,15 @@ export default function Register() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError('');
+    if (username.length < 3 || username.length > 20) {
+      setError('Username must be between 3 and 20 characters.');
+      return;
+    }
+    if (password.length < 6 || password.length > 40) {
+      setError('Password must be between 6 and 40 characters.');
+      return;
+    }
     try {
       await register(username, password);
     } catch (err) {
@@ -40,6 +49,9 @@ export default function Register() {
               className="input-field" 
               value={username} 
               onChange={e => setUsername(e.target.value)} 
+              placeholder="3–20 characters"
+              minLength={3}
+              maxLength={20}
               required
             />
           </div>
@@ -50,6 +62,9 @@ export default function Register() {
               className="input-field" 
               value={password} 
               onChange={e => setPassword(e.target.value)} 
+              placeholder="6–40 characters"
+              minLength={6}
+              maxLength={40}
               required
             />
           </div>

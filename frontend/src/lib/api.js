@@ -24,7 +24,13 @@ export const fetchApi = async (endpoint, options = {}) => {
   
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData.message || 'Something went wrong');
+    // Spring validation returns errors in different shapes
+    const message =
+      errorData.message ||
+      (errorData.errors && errorData.errors[0]?.defaultMessage) ||
+      (typeof errorData === 'string' ? errorData : null) ||
+      `Request failed with status ${response.status}`;
+    throw new Error(message);
   }
   
   if (response.status === 204 || response.headers.get('content-length') === '0') {

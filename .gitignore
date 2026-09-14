@@ -1,0 +1,6 @@
+upload_secrets.ps1
+.env
+.env.local
+*.env
+.DS_Store
+Thumbs.db
