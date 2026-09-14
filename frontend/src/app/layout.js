@@ -2,8 +2,8 @@ import "./globals.css";
 import { AuthProvider } from "../context/AuthContext";
 
 export const metadata = {
-  title: "ToDo Application",
-  description: "A premium Trello-like task management app",
+  title: "TaskFlow – ToDo Application",
+  description: "A premium Trello-like task management app | Deployed via CI/CD",
 };
 
 export default function RootLayout({ children }) {
