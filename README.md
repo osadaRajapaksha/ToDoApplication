@@ -1,81 +1,275 @@
-# ToDo Application - Full-Stack Task Management
+﻿# TaskFlow – ToDo Application
 
-This is a full-stack Trello-like task management application built as part of the Software Engineer Intern technical assignment. It features a task board with three status columns (To Do, Doing, Done) and drag-and-drop functionality.
+A full-stack, Trello-style task management application built with a **Next.js** frontend, **Spring Boot** backend, and **MongoDB** database. Deployed on AWS with a fully automated GitHub Actions CI/CD pipeline.
 
-## Features
-- **User Roles:** Normal Users and Administrators (seeded).
-- **Authentication:** JWT-based secure authentication.
-- **Task Management:** Create tasks, assign to users, change statuses via drag-and-drop.
-- **Role-Based Access:** 
-  - Normal users can manage their own tasks and assign unassigned tasks to themselves.
-  - Admins have complete control over all tasks and can assign them to anyone.
-- **Premium UI:** Modern glassmorphism aesthetic with responsive design.
+**Live Demo:** https://d1qefqlgtaaslb.cloudfront.net
+
+---
+
+## Table of Contents
+
+- [Project Overview](#project-overview)
+- [Technology Stack](#technology-stack)
+- [Features](#features)
+- [Architecture](#architecture)
+- [Screenshots](#screenshots)
+- [Local Setup](#local-setup)
+- [Docker Setup](#docker-setup)
+- [Deployment](#deployment)
+- [CI/CD Pipeline](#cicd-pipeline)
+- [API Reference](#api-reference)
+
+---
+
+## Project Overview
+
+TaskFlow is a role-based task management application where users can create, assign, and track tasks across three workflow columns: **To Do**, **Doing**, and **Done**.
+
+Users are authenticated with **JWT tokens** and interact with a secure REST API. The application enforces **role-based access control (RBAC)** — normal users manage their own tasks while admins have full control over all tasks and users.
+
+---
 
 ## Technology Stack
-- **Frontend:** Next.js (App Router), React, Vanilla CSS
-- **Backend:** Java Spring Boot, Spring Security
-- **Database:** MongoDB
-- **Security:** JSON Web Tokens (JWT), BCrypt Password Hashing
 
-## Prerequisites
-- Java 21 or later
-- Node.js 18 or later
-- MongoDB (Running locally on port 27017 or a MongoDB Atlas URI)
+| Layer | Technology |
+|---|---|
+| **Frontend** | Next.js 15 (App Router), React 19, Vanilla CSS |
+| **Backend** | Java 21, Spring Boot 4, Spring Security |
+| **Database** | MongoDB (Atlas) |
+| **Authentication** | JWT (JSON Web Tokens), BCrypt |
+| **Infrastructure** | AWS EC2, AWS S3, AWS CloudFront |
+| **Containerisation** | Docker, Docker Compose |
+| **CI/CD** | GitHub Actions |
+| **IaC** | Terraform |
 
-## Setup Instructions
+---
 
-### Environment Variables
-#### Backend (`backend/src/main/resources/application.properties`)
-```properties
-# MongoDB URI (default is localhost)
-# Set SPRING_DATA_MONGODB_URI in your environment if using Atlas
-spring.data.mongodb.uri=${SPRING_DATA_MONGODB_URI:mongodb://localhost:27017/todoapp}
+## Features
 
-# JWT Secret (Must be base64 encoded string at least 256 bits)
-app.jwt.secret=${JWT_SECRET:thisisasecretkeywhichshouldbeatleast256bitslongsothatitworks}
-app.jwt.expirationMs=${JWT_EXPIRATION_MS:86400000}
-```
+### Authentication
+- User registration with validation (username 3–20 chars, password 6–40 chars)
+- JWT-based stateless authentication
+- Secure password hashing with BCrypt
+- Persistent login via localStorage token
 
-#### Frontend (`frontend/src/lib/api.js`)
-Ensure the `API_URL` points to your backend instance.
-```javascript
-export const API_URL = 'http://localhost:8080/api';
-```
+### Task Management
+- Create tasks with title and description
+- Tasks organised in three columns: **To Do**, **Doing**, **Done**
+- Move tasks between columns via status update
+- Assign tasks to yourself or other users (admin only)
 
-### Running the Backend
-1. Navigate to the `backend` directory.
-2. Run the application using the Maven wrapper:
-   ```bash
-   ./mvnw spring-boot:run
-   ```
-   *Note: On Windows use `.\mvnw spring-boot:run`*
-3. The server will start on `http://localhost:8080`.
-4. **Admin Account:** The seeder will automatically create an admin user on the first run.
-   - Username: `admin`
-   - Password: `admin123`
+### Role-Based Access Control
+| Action | Normal User | Admin |
+|---|---|---|
+| View all tasks | ✅ | ✅ |
+| Create tasks | ✅ | ✅ |
+| Edit own tasks | ✅ | ✅ |
+| Delete own tasks | ✅ | ✅ |
+| Edit any task | ❌ | ✅ |
+| Delete any task | ❌ | ✅ |
+| Assign tasks to any user | ❌ | ✅ |
 
-### Running the Frontend
-1. Navigate to the `frontend` directory.
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
-3. Start the development server:
-   ```bash
-   npm run dev
-   ```
-4. Open `http://localhost:3000` in your browser.
+### UI/UX
+- Modern glassmorphism dark theme
+- Smooth micro-animations and hover effects
+- Responsive layout
+- Real-time task board updates
 
-## Deployment Information
-- **Frontend:** Can be easily deployed on Vercel or Netlify. Connect the GitHub repo and set the build command to `npm run build`.
-- **Backend:** Can be deployed on platforms like Render, Heroku, or AWS Elastic Beanstalk. Ensure to set the `SPRING_DATA_MONGODB_URI` environment variable.
-- **Database:** MongoDB Atlas is recommended for production databases.
+---
+
+## Architecture
+
+`
+┌─────────────────────────────────────────────────┐
+│                  User's Browser                 │
+└───────────────────┬─────────────────────────────┘
+                    │ HTTPS
+┌───────────────────▼─────────────────────────────┐
+│             AWS CloudFront (CDN)                │
+│   ┌─────────────────┐  ┌──────────────────────┐ │
+│   │  /  (frontend)  │  │  /api/* (proxy)      │ │
+│   └────────┬────────┘  └──────────┬───────────┘ │
+└────────────│──────────────────────│─────────────┘
+             │                      │
+┌────────────▼────────┐  ┌──────────▼───────────┐
+│     AWS S3 Bucket   │  │  AWS EC2 Instance    │
+│  (Next.js static    │  │  Spring Boot + Docker│
+│   export)           │  │  Port 8080           │
+└─────────────────────┘  └──────────┬───────────┘
+                                     │
+                          ┌──────────▼───────────┐
+                          │   MongoDB Atlas      │
+                          │   (Cloud Database)   │
+                          └──────────────────────┘
+`
+
+---
 
 ## Screenshots
 
-*(Candidate: Insert Application Screenshots Here)*
+> **Login Page** — JWT-secured authentication with error handling
 
-- Login Page
-- Dashboard (Normal User View)
-- Dashboard (Admin View)
-- Drag and Drop functionality
+> **Register Page** — User registration with client-side validation
+
+> **Dashboard** — Task board with To Do, Doing, and Done columns, task cards showing assignment status, and role-based Edit/Delete controls
+
+---
+
+## Local Setup
+
+### Prerequisites
+
+- Java 21+
+- Node.js 20+
+- MongoDB (local or [MongoDB Atlas](https://www.mongodb.com/atlas))
+
+### 1. Clone the repository
+
+`ash
+git clone https://github.com/osadaRajapaksha/ToDoApplication.git
+cd ToDoApplication
+`
+
+### 2. Backend
+
+Create an pplication.properties override or set environment variables:
+
+`ash
+# Required environment variables
+export SPRING_DATA_MONGODB_URI=mongodb://localhost:27017
+export JWT_SECRET=your-secret-key-at-least-256-bits-long
+export APP_FRONTEND_URL=http://localhost:3000
+`
+
+Run the backend:
+
+`ash
+cd backend
+./mvnw spring-boot:run
+# Windows: .\mvnw spring-boot:run
+`
+
+The API will be available at http://localhost:8080.
+
+**Default admin account** (created automatically on first run):
+- Username: dmin
+- Password: dmin123
+
+### 3. Frontend
+
+`ash
+cd frontend
+npm install
+npm run dev
+`
+
+Open http://localhost:3000 in your browser.
+
+---
+
+## Docker Setup
+
+The entire stack can be run with Docker Compose. Create a .env file in the project root:
+
+`env
+SPRING_DATA_MONGODB_URI=<your-mongodb-atlas-uri>
+JWT_SECRET=<your-secret-key>
+APP_FRONTEND_URL=http://localhost:3000
+`
+
+Then run:
+
+`ash
+docker-compose up -d --build
+`
+
+| Service | Port |
+|---|---|
+| Backend API | http://localhost:8080 |
+
+---
+
+## Deployment
+
+The application is deployed on AWS with the following resources:
+
+| Resource | Purpose |
+|---|---|
+| **CloudFront** | CDN — serves frontend + proxies /api/* to backend |
+| **S3 Bucket** | Hosts the Next.js static export |
+| **EC2 (t3.small)** | Runs the Spring Boot backend in Docker |
+| **MongoDB Atlas** | Managed cloud database |
+
+Infrastructure is provisioned with **Terraform** (see the 	erraform/ directory).
+
+### Required Environment Variables (Production)
+
+| Variable | Description |
+|---|---|
+| SPRING_DATA_MONGODB_URI | MongoDB Atlas connection string |
+| JWT_SECRET | Secret key for signing JWT tokens (min 256 bits) |
+| APP_FRONTEND_URL | The CloudFront URL of the deployed frontend |
+
+> ⚠️ **Never commit real credentials.** Use environment variables or a secrets manager.
+
+---
+
+## CI/CD Pipeline
+
+Every push to master automatically triggers the GitHub Actions pipeline defined in [.github/workflows/deploy.yml](.github/workflows/deploy.yml):
+
+`
+Push to master
+      │
+      ├─ backend-build   →  mvn package (compile + test)
+      │
+      ├─ backend-deploy  →  SSH to EC2 → git pull → docker-compose up --build
+      │       └─ health check (verifies API is responding)
+      │
+      └─ frontend-deploy →  npm ci → npm run build → s3 sync → CloudFront invalidation
+`
+
+### GitHub Actions Secrets Required
+
+| Secret | Description |
+|---|---|
+| AWS_ACCESS_KEY_ID | IAM user access key for S3/CloudFront |
+| AWS_SECRET_ACCESS_KEY | IAM user secret key |
+| S3_BUCKET_NAME | S3 bucket name for the frontend |
+| CLOUDFRONT_DISTRIBUTION_ID | CloudFront distribution ID |
+| EC2_HOST | Public IP of the EC2 instance |
+| EC2_USER | SSH user (e.g. ec2-user) |
+| EC2_SSH_PRIVATE_KEY | Private key for SSH access to EC2 |
+| SPRING_DATA_MONGODB_URI | MongoDB connection string |
+| JWT_SECRET | JWT signing secret |
+| APP_FRONTEND_URL | The CloudFront frontend URL |
+
+---
+
+## API Reference
+
+All endpoints are prefixed with /api.
+
+### Auth
+
+| Method | Endpoint | Description | Auth |
+|---|---|---|---|
+| POST | /api/auth/signup | Register a new user | Public |
+| POST | /api/auth/signin | Login and receive a JWT | Public |
+
+### Tasks
+
+| Method | Endpoint | Description | Auth |
+|---|---|---|---|
+| GET | /api/tasks | Get all tasks | Required |
+| POST | /api/tasks | Create a new task | Required |
+| PUT | /api/tasks/{id} | Update a task | Required |
+| DELETE | /api/tasks/{id} | Delete a task | Required |
+
+### Users
+
+| Method | Endpoint | Description | Auth |
+|---|---|---|---|
+| GET | /api/users | List all users | Admin only |
+
+> Authentication: Include the JWT token in the Authorization header as Bearer <token>.
