@@ -7,8 +7,8 @@ services:
     ports:
       - "8080:8080"
     environment:
-      - SPRING_DATA_MONGODB_URI=${SPRING_DATA_MONGODB_URI}
-      - SPRING_MONGODB_URI=${SPRING_DATA_MONGODB_URI}
+      - SPRING_DATA_MONGODB_URI=${SPRING_DATA_MONGODB_URI}/todoapp
+      - SPRING_MONGODB_URI=${SPRING_DATA_MONGODB_URI}/todoapp
       - JWT_SECRET=${JWT_SECRET}
       - APP_FRONTEND_URL=${APP_FRONTEND_URL}
     restart: unless-stopped
