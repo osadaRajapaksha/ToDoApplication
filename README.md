@@ -1,6 +1,6 @@
 # TaskFlow – ToDo Application
 
-A full-stack, Trello-style task management application built with a **Next.js** frontend, **Spring Boot** backend, and **MongoDB** database. Deployed on AWS with a fully automated GitHub Actions CI/CD pipeline.
+A full-stack, Trello-style task management application built with a **Next.js** frontend with an AI assistant, **Spring Boot** backend, and **MongoDB** database. Deployed on AWS with a fully automated GitHub Actions CI/CD pipeline.
 
 **Live Demo:** https://d1qefqlgtaaslb.cloudfront.net
 
