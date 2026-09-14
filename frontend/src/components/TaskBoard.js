@@ -15,6 +15,12 @@ export default function TaskBoard({ user }) {
   const [newTaskTitle, setNewTaskTitle] = useState('');
   const [newTaskDesc, setNewTaskDesc] = useState('');
 
+  // Edit task form state
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingTask, setEditingTask] = useState(null);
+  const [editTaskTitle, setEditTaskTitle] = useState('');
+  const [editTaskDesc, setEditTaskDesc] = useState('');
+
   const loadTasks = async () => {
     try {
       const data = await fetchApi('/tasks');
@@ -82,7 +88,36 @@ export default function TaskBoard({ user }) {
       loadTasks();
     } catch (err) {
       console.error(err);
-      alert('Error creating task');
+      alert(err.message || 'Error creating task');
+    }
+  };
+
+  const handleEditTask = async (e) => {
+    e.preventDefault();
+    try {
+      await fetchApi(`/tasks/${editingTask.id}`, {
+        method: 'PUT',
+        body: JSON.stringify({ title: editTaskTitle, description: editTaskDesc })
+      });
+      setEditingTask(null);
+      setShowEditModal(false);
+      loadTasks();
+    } catch (err) {
+      console.error(err);
+      alert(err.message || 'Error editing task');
+    }
+  };
+
+  const handleDeleteTask = async (taskId) => {
+    if (!confirm('Are you sure you want to delete this task?')) return;
+    try {
+      await fetchApi(`/tasks/${taskId}`, {
+        method: 'DELETE'
+      });
+      loadTasks();
+    } catch (err) {
+      console.error(err);
+      alert(err.message || 'Error deleting task');
     }
   };
 
@@ -162,6 +197,29 @@ export default function TaskBoard({ user }) {
                       )
                     )}
                   </div>
+                  
+                  {/* Task Management Controls (Edit/Delete) */}
+                  {(user.role === 'ROLE_ADMIN' || task.creatorId === user.id) && (
+                    <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '10px' }}>
+                      <button 
+                        onClick={() => {
+                          setEditingTask(task);
+                          setEditTaskTitle(task.title);
+                          setEditTaskDesc(task.description);
+                          setShowEditModal(true);
+                        }}
+                        style={{ background: 'transparent', border: 'none', color: '#10B981', cursor: 'pointer', fontSize: '12px', textDecoration: 'underline' }}
+                      >
+                        Edit
+                      </button>
+                      <button 
+                        onClick={() => handleDeleteTask(task.id)}
+                        style={{ background: 'transparent', border: 'none', color: '#EF4444', cursor: 'pointer', fontSize: '12px', textDecoration: 'underline' }}
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
@@ -185,6 +243,28 @@ export default function TaskBoard({ user }) {
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '10px' }}>
                 <button type="button" onClick={() => setShowCreateModal(false)} className="btn-secondary">Cancel</button>
                 <button type="submit" className="btn-primary">Create</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {showEditModal && editingTask && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000 }}>
+          <div className="glass-panel" style={{ padding: '30px', width: '100%', maxWidth: '500px' }}>
+            <h2 style={{ marginBottom: '20px' }}>Edit Task</h2>
+            <form onSubmit={handleEditTask} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+              <div>
+                <label style={{ display: 'block', marginBottom: '5px' }}>Title</label>
+                <input required className="input-field" value={editTaskTitle} onChange={e => setEditTaskTitle(e.target.value)} />
+              </div>
+              <div>
+                <label style={{ display: 'block', marginBottom: '5px' }}>Description</label>
+                <textarea required className="input-field" value={editTaskDesc} onChange={e => setEditTaskDesc(e.target.value)} style={{ minHeight: '100px', resize: 'vertical' }} />
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '10px' }}>
+                <button type="button" onClick={() => { setShowEditModal(false); setEditingTask(null); }} className="btn-secondary">Cancel</button>
+                <button type="submit" className="btn-primary">Save Changes</button>
               </div>
             </form>
           </div>

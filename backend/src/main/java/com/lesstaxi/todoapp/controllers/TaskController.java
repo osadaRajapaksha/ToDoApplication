@@ -53,10 +53,21 @@ public class TaskController {
 
   @PutMapping("/{id}/status")
   public ResponseEntity<?> updateTaskStatus(@PathVariable String id, @RequestBody TaskRequest taskRequest) {
+    UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+    String role = userDetails.getAuthorities().iterator().next().getAuthority();
+    
     Optional<Task> taskData = taskRepository.findById(id);
     
     if (taskData.isPresent()) {
       Task _task = taskData.get();
+      
+      boolean isCreator = _task.getCreatorId() != null && _task.getCreatorId().equals(userDetails.getId());
+      boolean isAssignee = _task.getAssignedUserId() != null && _task.getAssignedUserId().equals(userDetails.getId());
+      
+      if (!role.equals("ROLE_ADMIN") && !isCreator && !isAssignee) {
+          return ResponseEntity.badRequest().body(new MessageResponse("Error: Unauthorized to update this task's status."));
+      }
+
       try {
          _task.setStatus(EStatus.valueOf(taskRequest.getStatus()));
          _task.setUpdatedAt(LocalDateTime.now());
@@ -64,6 +75,53 @@ public class TaskController {
       } catch (Exception e) {
          return ResponseEntity.badRequest().body(new MessageResponse("Error: Invalid status"));
       }
+    } else {
+      return ResponseEntity.notFound().build();
+    }
+  }
+
+  @PutMapping("/{id}")
+  public ResponseEntity<?> updateTask(@PathVariable String id, @RequestBody TaskRequest taskRequest) {
+    UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+    String role = userDetails.getAuthorities().iterator().next().getAuthority();
+    
+    Optional<Task> taskData = taskRepository.findById(id);
+    
+    if (taskData.isPresent()) {
+      Task _task = taskData.get();
+      
+      boolean isCreator = _task.getCreatorId() != null && _task.getCreatorId().equals(userDetails.getId());
+      
+      if (!role.equals("ROLE_ADMIN") && !isCreator) {
+          return ResponseEntity.badRequest().body(new MessageResponse("Error: Unauthorized to update this task."));
+      }
+
+      _task.setTitle(taskRequest.getTitle());
+      _task.setDescription(taskRequest.getDescription());
+      _task.setUpdatedAt(LocalDateTime.now());
+      return ResponseEntity.ok(taskRepository.save(_task));
+    } else {
+      return ResponseEntity.notFound().build();
+    }
+  }
+
+  @DeleteMapping("/{id}")
+  public ResponseEntity<?> deleteTask(@PathVariable String id) {
+    UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+    String role = userDetails.getAuthorities().iterator().next().getAuthority();
+    
+    Optional<Task> taskData = taskRepository.findById(id);
+    
+    if (taskData.isPresent()) {
+      Task _task = taskData.get();
+      boolean isCreator = _task.getCreatorId() != null && _task.getCreatorId().equals(userDetails.getId());
+      
+      if (!role.equals("ROLE_ADMIN") && !isCreator) {
+          return ResponseEntity.badRequest().body(new MessageResponse("Error: Unauthorized to delete this task."));
+      }
+
+      taskRepository.deleteById(id);
+      return ResponseEntity.ok(new MessageResponse("Task deleted successfully."));
     } else {
       return ResponseEntity.notFound().build();
     }

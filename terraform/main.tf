@@ -2,6 +2,11 @@ provider "aws" {
   region = var.aws_region
 }
 
+resource "aws_key_pair" "debug_key" {
+  key_name   = "debug_key"
+  public_key = file("${path.module}/mykey.pub")
+}
+
 # ----------------- BACKEND EC2 -----------------
 
 resource "aws_security_group" "app_sg" {
@@ -47,6 +52,7 @@ resource "aws_instance" "app_instance" {
   ami           = data.aws_ami.amazon_linux.id
   instance_type = "t3.small"
   vpc_security_group_ids = [aws_security_group.app_sg.id]
+  key_name      = aws_key_pair.debug_key.key_name
 
   user_data = <<-EOF
               #!/bin/bash
@@ -55,7 +61,7 @@ resource "aws_instance" "app_instance" {
               systemctl start docker
               systemctl enable docker
               
-              curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+              curl -L "https://github.com/docker/compose/releases/download/v2.24.6/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
               chmod +x /usr/local/bin/docker-compose
               
               cd /home/ec2-user
@@ -129,6 +135,18 @@ resource "aws_cloudfront_distribution" "frontend_distribution" {
     origin_id   = "todoapp-frontend-s3"
   }
 
+  origin {
+    domain_name = aws_instance.app_instance.public_dns
+    origin_id   = "todoapp-backend-ec2"
+
+    custom_origin_config {
+      http_port              = 8080
+      https_port             = 443
+      origin_protocol_policy = "http-only"
+      origin_ssl_protocols   = ["TLSv1.2"]
+    }
+  }
+
   enabled             = true
   is_ipv6_enabled     = true
   default_root_object = "index.html"
@@ -149,6 +167,26 @@ resource "aws_cloudfront_distribution" "frontend_distribution" {
     min_ttl                = 0
     default_ttl            = 3600
     max_ttl                = 86400
+  }
+
+  ordered_cache_behavior {
+    path_pattern     = "/api/*"
+    allowed_methods  = ["GET", "HEAD", "OPTIONS", "PUT", "POST", "PATCH", "DELETE"]
+    cached_methods   = ["GET", "HEAD"]
+    target_origin_id = "todoapp-backend-ec2"
+
+    forwarded_values {
+      query_string = true
+      headers      = ["*"]
+      cookies {
+        forward = "all"
+      }
+    }
+
+    viewer_protocol_policy = "redirect-to-https"
+    min_ttl                = 0
+    default_ttl            = 0
+    max_ttl                = 0
   }
 
   restrictions {
@@ -190,7 +228,7 @@ resource "null_resource" "build_and_deploy_frontend" {
     command = <<-EOT
       cd ../frontend
       npm install
-      $env:NEXT_PUBLIC_API_URL="http://${aws_instance.app_instance.public_ip}:8080/api"
+      $env:NEXT_PUBLIC_API_URL="/api"
       npm run build
       aws s3 sync out/ s3://${aws_s3_bucket.frontend_bucket.bucket} --delete
     EOT
