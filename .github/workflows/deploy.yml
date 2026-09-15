@@ -50,7 +50,35 @@ jobs:
       - name: Set up SSH key
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.EC2_SSH_PRIVATE_KEY }}" > ~/.ssh/ec2_key
+          cat << 'EOF' > ~/.ssh/ec2_key
+          -----BEGIN OPENSSH PRIVATE KEY-----
+          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
+          -----END OPENSSH PRIVATE KEY-----
+          EOF
           chmod 600 ~/.ssh/ec2_key
           ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
 
