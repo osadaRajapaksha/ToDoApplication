@@ -17,6 +17,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 @Service
+// Handles user authentication and registration logic
 public class AuthService {
     @Autowired
     private AuthenticationManager authenticationManager;

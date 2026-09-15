@@ -14,6 +14,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
+// Core task management service responsible for all business logic
 public class TaskService {
     @Autowired
     private TaskRepository taskRepository;
