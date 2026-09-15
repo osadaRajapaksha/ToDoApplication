@@ -1,155 +1,60 @@
 package com.lesstaxi.todoapp.controllers;
 
-import com.lesstaxi.todoapp.models.EStatus;
 import com.lesstaxi.todoapp.models.Task;
 import com.lesstaxi.todoapp.payload.request.TaskRequest;
 import com.lesstaxi.todoapp.payload.response.MessageResponse;
-import com.lesstaxi.todoapp.repositories.TaskRepository;
 import com.lesstaxi.todoapp.security.services.UserDetailsImpl;
+import com.lesstaxi.todoapp.services.TaskService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
-import jakarta.validation.Valid;
-import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 
 @CrossOrigin(origins = "*", maxAge = 3600)
 @RestController
 @RequestMapping("/api/tasks")
 public class TaskController {
-  @Autowired
-  TaskRepository taskRepository;
-
-  @GetMapping
-  public ResponseEntity<List<Task>> getAllTasks() {
-    UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-    String role = userDetails.getAuthorities().iterator().next().getAuthority();
     
-    if (role.equals("ROLE_ADMIN")) {
-      return ResponseEntity.ok(taskRepository.findAll());
-    } else {
-      return ResponseEntity.ok(taskRepository.findByCreatorIdOrAssignedUserId(userDetails.getId(), userDetails.getId()));
+    @Autowired
+    private TaskService taskService;
+
+    @GetMapping
+    public ResponseEntity<List<Task>> getAllTasks() {
+        UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        return ResponseEntity.ok(taskService.getAllTasks(userDetails));
     }
-  }
 
-  @PostMapping
-  public ResponseEntity<Task> createTask(@RequestBody TaskRequest taskRequest) {
-    UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-    
-    Task task = new Task();
-    task.setTitle(taskRequest.getTitle());
-    task.setDescription(taskRequest.getDescription());
-    task.setCreatorId(userDetails.getId());
-    // Creator can also optionally assign it to themselves upon creation
-    if (taskRequest.getAssigneeId() != null && taskRequest.getAssigneeId().equals(userDetails.getId())) {
-       task.setAssignedUserId(userDetails.getId());
+    @PostMapping
+    public ResponseEntity<Task> createTask(@RequestBody TaskRequest taskRequest) {
+        UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        return ResponseEntity.ok(taskService.createTask(taskRequest, userDetails));
     }
-    
-    return ResponseEntity.ok(taskRepository.save(task));
-  }
 
-  @PutMapping("/{id}/status")
-  public ResponseEntity<?> updateTaskStatus(@PathVariable String id, @RequestBody TaskRequest taskRequest) {
-    UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-    String role = userDetails.getAuthorities().iterator().next().getAuthority();
-    
-    Optional<Task> taskData = taskRepository.findById(id);
-    
-    if (taskData.isPresent()) {
-      Task _task = taskData.get();
-      
-      boolean isCreator = _task.getCreatorId() != null && _task.getCreatorId().equals(userDetails.getId());
-      boolean isAssignee = _task.getAssignedUserId() != null && _task.getAssignedUserId().equals(userDetails.getId());
-      
-      if (!role.equals("ROLE_ADMIN") && !isCreator && !isAssignee) {
-          return ResponseEntity.badRequest().body(new MessageResponse("Error: Unauthorized to update this task's status."));
-      }
-
-      try {
-         _task.setStatus(EStatus.valueOf(taskRequest.getStatus()));
-         _task.setUpdatedAt(LocalDateTime.now());
-         return ResponseEntity.ok(taskRepository.save(_task));
-      } catch (Exception e) {
-         return ResponseEntity.badRequest().body(new MessageResponse("Error: Invalid status"));
-      }
-    } else {
-      return ResponseEntity.notFound().build();
+    @PutMapping("/{id}/status")
+    public ResponseEntity<Task> updateTaskStatus(@PathVariable String id, @RequestBody TaskRequest taskRequest) {
+        UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        return ResponseEntity.ok(taskService.updateTaskStatus(id, taskRequest, userDetails));
     }
-  }
 
-  @PutMapping("/{id}")
-  public ResponseEntity<?> updateTask(@PathVariable String id, @RequestBody TaskRequest taskRequest) {
-    UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-    String role = userDetails.getAuthorities().iterator().next().getAuthority();
-    
-    Optional<Task> taskData = taskRepository.findById(id);
-    
-    if (taskData.isPresent()) {
-      Task _task = taskData.get();
-      
-      boolean isCreator = _task.getCreatorId() != null && _task.getCreatorId().equals(userDetails.getId());
-      
-      if (!role.equals("ROLE_ADMIN") && !isCreator) {
-          return ResponseEntity.badRequest().body(new MessageResponse("Error: Unauthorized to update this task."));
-      }
-
-      _task.setTitle(taskRequest.getTitle());
-      _task.setDescription(taskRequest.getDescription());
-      _task.setUpdatedAt(LocalDateTime.now());
-      return ResponseEntity.ok(taskRepository.save(_task));
-    } else {
-      return ResponseEntity.notFound().build();
+    @PutMapping("/{id}")
+    public ResponseEntity<Task> updateTask(@PathVariable String id, @RequestBody TaskRequest taskRequest) {
+        UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        return ResponseEntity.ok(taskService.updateTask(id, taskRequest, userDetails));
     }
-  }
 
-  @DeleteMapping("/{id}")
-  public ResponseEntity<?> deleteTask(@PathVariable String id) {
-    UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-    String role = userDetails.getAuthorities().iterator().next().getAuthority();
-    
-    Optional<Task> taskData = taskRepository.findById(id);
-    
-    if (taskData.isPresent()) {
-      Task _task = taskData.get();
-      boolean isCreator = _task.getCreatorId() != null && _task.getCreatorId().equals(userDetails.getId());
-      
-      if (!role.equals("ROLE_ADMIN") && !isCreator) {
-          return ResponseEntity.badRequest().body(new MessageResponse("Error: Unauthorized to delete this task."));
-      }
-
-      taskRepository.deleteById(id);
-      return ResponseEntity.ok(new MessageResponse("Task deleted successfully."));
-    } else {
-      return ResponseEntity.notFound().build();
+    @DeleteMapping("/{id}")
+    public ResponseEntity<MessageResponse> deleteTask(@PathVariable String id) {
+        UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        taskService.deleteTask(id, userDetails);
+        return ResponseEntity.ok(new MessageResponse("Task deleted successfully."));
     }
-  }
 
-  @PutMapping("/{id}/assign")
-  public ResponseEntity<?> assignTask(@PathVariable String id, @RequestBody TaskRequest taskRequest) {
-    UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-    String role = userDetails.getAuthorities().iterator().next().getAuthority();
-    String assigneeId = taskRequest.getAssigneeId();
-
-    Optional<Task> taskData = taskRepository.findById(id);
-    if (taskData.isPresent()) {
-      Task _task = taskData.get();
-      
-      if (role.equals("ROLE_ADMIN")) {
-         _task.setAssignedUserId(assigneeId);
-      } else {
-         if ((_task.getAssignedUserId() == null || _task.getAssignedUserId().isEmpty()) && assigneeId.equals(userDetails.getId())) {
-             _task.setAssignedUserId(assigneeId);
-         } else {
-             return ResponseEntity.badRequest().body(new MessageResponse("Error: Unauthorized to assign this task."));
-         }
-      }
-      _task.setUpdatedAt(LocalDateTime.now());
-      return ResponseEntity.ok(taskRepository.save(_task));
-    } else {
-      return ResponseEntity.notFound().build();
+    @PutMapping("/{id}/assign")
+    public ResponseEntity<Task> assignTask(@PathVariable String id, @RequestBody TaskRequest taskRequest) {
+        UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        return ResponseEntity.ok(taskService.assignTask(id, taskRequest, userDetails));
     }
-  }
 }
